@@ -1,44 +1,268 @@
+#include "game.h"
 #include <iostream>
+#include <vector>
+#include <cstdlib>
 using namespace std;
 
-enum P_type { HUMAN, ENGINE }; // player type
-enum Side { WHITE, BLACK };
+Game::Game(P_type wType, P_type bType) {
+    wp = wType;
+    bp = bType;
 
-typedef struct point {
-    int r, c;
-};
-
-class Game {
-    public:
-    
-    int board[8][8];
-    int wp; // white player
-    int bp; // black player
-    int curr_turn;
-
-    long white_timer;
-    long black_timer;
-
-    Game(p_type wType, p_type bType) {
-        wp = wType;
-        bp = bType;
-
-        curr_turn = WHITE;
+    curr_turn = WHITE;
+    int i,j;
+    for (i = 0; i < 2; i++) {
+        for (j = 0; j < 3; j++) {
+            moved[i][j] = false;
+        }
     }
 
-    bool is_valid_move(point src, point dst) {
+    whitePiece = new unordered_set<Point, PointHash>[7];
+    blackPiece = new unordered_set<Point, PointHash>[7];
 
-    }
-
+    init_board();
 }
 
-void main() {
-    // DISPLAY INITIAL SCREEN (select game type)
-    // THEN GET TYPE OF EACH PLAYER
-    // GET TIME LIMIT
+// initialize game board state
+void Game::init_board() {
+    int i;
+    Point wPoint, bPoint;
+    Piece p;
+    Piece piecesOrder[] = { ROOK, KNIGHT, BISHOP, QUEEN, 
+        KING , BISHOP, KNIGHT, ROOK }; // initial setup
     
-    // start game
-    Game g(white_type, black_type);
+    for (i = 0; i < 8; i++) { // iterate over column
+        // add pawn
+        wPoint.r = 1;
+        wPoint.c = i;
+        bPoint.r = 6;
+        bPoint.c = i;
 
+        whitePiece[PAWN].insert(wPoint);
+        blackPiece[PAWN].insert(bPoint);
+        board[wPoint.r][wPoint.c] = PAWN;
+        board[bPoint.r][bPoint.c] = -PAWN;
 
+        // add other pieces in same column
+        p = piecesOrder[i];
+        wPoint.r = 0;
+        bPoint.r = 7;
+        
+        whitePiece[p].insert(wPoint);
+        blackPiece[p].insert(bPoint);
+        board[wPoint.r][wPoint.c] = p;
+        board[bPoint.r][bPoint.c] = -p;
+    }
+}
+
+inline int Game::check_first(Point src, int rd, int cd) {
+    rd /= abs(rd);
+    cd /= abs(cd);
+    int r = src.r + rd, c = src.c + cd;
+    int p;
+    while (r <= 7 && c <= 7) {
+        p = board[r][c];
+        if (p != EMPTY) return p;
+
+        r += rd;
+        c += cd;
+    }
+
+    return 0;
+}
+
+// return true if the path between src and dst is unblocked
+// assume the input points are positioned vertical, horizontal or diagonal
+// third parameter is set to true when it is used for checking for castling
+inline bool Game::not_blocked(Point src, Point dst, bool isCastling) {
+    int rDiff = dst.r - src.r; // vectors for stepping
+    int cDiff = dst.c - src.c;
+    if (rDiff != 0) rDiff /= abs(rDiff);
+    if (cDiff != 0) cDiff /= abs(cDiff);
+
+    int r = src.r + rDiff;
+    int c = src.c + cDiff;
+
+    Side srcSide = (board[src.r][src.c] > 0) ? WHITE : BLACK;
+    Side dstSide = (board[dst.r][dst.c] > 0) ? WHITE : BLACK;
+
+    while ((r != dst.r) || (c != dst.c)) {
+        if (board[r][c] != EMPTY) return false;
+
+        r += rDiff;
+        c += cDiff;
+    }
+
+    if (!isCastling && (board[dst.r][dst.c] != EMPTY) && (srcSide == dstSide))
+        return false;
+    
+    return true;
+}
+
+// TODO!!!!
+// if true, checks whether the move caused same side king's check
+// if false, checks for opponent's king
+inline bool Game::is_check(Point src, Point dst, bool sameSide) {
+    Point kingPos;
+    unordered_set<Point>::iterator it;
+    int rDiff, cDiff, s, t, p = 0;
+
+    if (sameSide) {
+        it = (board[src.r][src.c] > 0) ? whitePiece[KING].begin() :
+            blackPiece[KING].begin();
+        kingPos = *it;
+        rDiff = kingPos.r - src.r;
+        cDiff = kingPos.c - src.c;
+        s = (curr_turn == WHITE) ? -1 : 1;
+
+        if (rDiff == 0 || cDiff == 0) {
+            p = check_first(src, rDiff, cDiff);
+            t = ROOK;
+        } else if (abs(rDiff) == abs(cDiff)) {
+            p = check_first(src, rDiff, cDiff);
+            t = BISHOP;
+        }
+        p *= s;
+
+        if (p == t || p == QUEEN) return false;
+    }
+    return true;
+}
+
+// check whether the given input points represent valid castling
+bool Game::is_valid_castling(Point src, Point dst) {
+    int target = board[src.r][src.c];
+    Point rookPos;
+    rookPos.r = src.r;
+
+    Side s = (target > 0) ? WHITE : BLACK;
+
+    // check whether the king has moved or not
+    if (moved[s][0]) return false;
+        
+    // check for rook's validity
+    if (src.c < dst.c) { // left rook
+        if (moved[s][1]) return false;
+        rookPos.c = 0;
+    } else { // right rook
+        if (moved[s][2]) return false;
+        rookPos.c = 7;
+    }
+
+    if (!not_blocked(src, rookPos, true)) return false;
+
+    return true;
+}
+
+bool Game::is_valid_move(Point src, Point dst, bool *isCastling) {
+    if ((src.r == dst.r) && (src.c == dst.c)) return false;
+
+    int piece = board[src.r][src.c], tmp, dstPiece;
+    int rDiff = abs(dst.r - src.r);
+    int cDiff = abs(dst.c - src.c);
+    Side s = (piece > 0) ? WHITE : BLACK;
+    Side dstSide;
+
+    switch (abs(piece)) {
+        case PAWN: // this case, piece = (valid vertical moving size)
+
+            // pawn moving vertically
+            if ((dst.c == src.c) && (board[dst.r][dst.c] == EMPTY)) {
+                if (dst.r == src.r + piece) {} // one step
+                else if (dst.r == src.r + 2*piece) { // two steps
+                    tmp = (s == WHITE) ? 1 : 6;
+                    
+                    // if blocked or not in valid position
+                    if ((src.r != tmp) 
+                            || (board[src.r + piece][src.c] != EMPTY))
+                        return false;
+                }
+            
+            // moving diagonally
+            } else if ((dst.r == src.r + piece)
+                    && (cDiff == 1)) {
+                // do nothing
+
+            // if none of above, return false
+            } else return false;
+
+        case KNIGHT:
+            dstPiece = board[dst.r][dst.c];
+            dstSide = (dstPiece > 0) ? WHITE : BLACK;
+
+            if (!(rDiff == 2 && cDiff == 1) && !(rDiff == 1 && cDiff == 2)) return false;
+
+            // if same side piece is on dst
+            if ((dstPiece != EMPTY) && (dstSide == s)) return false;
+        
+        case BISHOP:
+            if (rDiff != cDiff) return false;
+            if (!not_blocked(src, dst, false)) return false;
+
+        case ROOK:
+            if ((src.r != dst.r) && (src.c != dst.c)) return false;
+            if (!not_blocked(src, dst, false)) return false;
+
+        case QUEEN:
+            if ((rDiff != cDiff)
+                && ((src.r != dst.r) && (src.c != dst.c))) return false;
+            if (!not_blocked(src, dst, false)) return false;
+
+        case KING:
+            tmp = rDiff + cDiff;
+
+            // king moving one step
+            if (tmp == 1) {
+                dstPiece = board[dst.r][dst.c];
+                dstSide = (dstPiece > 0) ? WHITE : BLACK;
+                if ((dstPiece != EMPTY) && (dstSide == s)) return false;
+            
+            // if valid castling
+            } else if ((tmp == 2) && is_valid_castling(src, dst)) {
+                *isCastling = true;
+            } else return false;
+    }
+
+    // if the move results in same side king's check
+    if (is_check(src, dst, true)) return false;
+
+    return true;
+}
+
+// apply all changes to the game state made by the move
+void Game::make_move(Point src, Point dst, bool isCastling) {
+    // first change the point set for pieces
+    int p = board[src.r][src.c];
+    if (curr_turn == WHITE) {
+        whitePiece[abs(p)].erase(src);
+        whitePiece[abs(p)].insert(dst);
+    } else {
+        blackPiece[abs(p)].erase(src);
+        blackPiece[abs(p)].insert(dst);        
+    }
+
+    int target = board[dst.r][dst.c];
+    if (target != EMPTY) {
+        if (curr_turn == WHITE) {
+            blackPiece[abs(target)].erase(dst);
+        } else {
+            whitePiece[abs(target)].erase(dst);
+        }
+    }
+
+    board[dst.r][dst.c] = board[src.r][src.c];
+    board[src.r][src.c] = EMPTY;
+
+    if (isCastling) {
+        if (dst.c < src.c) {
+            board[src.r][dst.c+1] = board[src.r][0];
+            board[src.r][0] = EMPTY;
+        } else {
+            board[src.r][dst.c-1] = board[src.r][7];
+            board[src.r][7] = EMPTY;            
+        }
+    }
+}
+
+void Game::change_turn() {
+    curr_turn = (curr_turn == WHITE) ? BLACK : WHITE;
 }
