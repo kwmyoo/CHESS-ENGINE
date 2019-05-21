@@ -25,6 +25,18 @@ void display_board(Game g) {
     }
 }
 
+void parse_command(Point *src, Point *dst) {
+    char command[4];
+    for (int i = 0; i < 4; i++) {
+        std::cin >> command[i];
+    }
+
+    src->c = (int)(command[0] - 'a');
+    src->r = (int)(command[1] - '1');
+    dst->c = (int)(command[2] - 'a');
+    dst->r = (int)(command[3] - '1');
+}
+
 int main() {
     // DISPLAY INITIAL SCREEN (select game type)
     // THEN GET TYPE OF EACH PLAYER
@@ -32,18 +44,10 @@ int main() {
     
     Game g(HUMAN, HUMAN);
 
-    char command[4];
     Point src, dst;
     while (true) {
         display_board(g);
-        for (int i = 0; i < 4; i++) {
-            std::cin >> command[i];
-        }
-        src.c = (int)(command[0] - 'a');
-        src.r = (int)(command[1] - '1');
-        dst.c = (int)(command[2] - 'a');
-        dst.r = (int)(command[3] - '1');
-
+        parse_command(&src, &dst);
         g.handle_command(src, dst);
     }
 }

@@ -33,16 +33,15 @@ public:
     Side curr_turn;
     bool moved[2][3]; // row 0 1 : white black, col 0 1 2: king l_rook r_rook
 
+    // array of set of positions for each pieces
+    unordered_set<Point, PointHash> *whitePiece;
+    unordered_set<Point, PointHash> *blackPiece;
+
     long white_timer;
     long black_timer;
 
     Game(P_type wType, P_type bType);
     bool handle_command(Point src, Point dst); // return true on valid moves
-
-protected:
-    // array of set of positions for each pieces
-    unordered_set<Point, PointHash> *whitePiece;
-    unordered_set<Point, PointHash> *blackPiece;
 
 private:
     Point src, dst; // for move command
