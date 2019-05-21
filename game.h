@@ -1,4 +1,3 @@
-#include <iostream>
 #include <cstdlib>
 #include <unordered_set>
 #include <unordered_map>
@@ -32,7 +31,7 @@ public:
     P_type wp; // white player
     P_type bp; // black player
     Side curr_turn;
-    bool moved[2][3]; // row 0 1 : white black, col 1 2 3: king l_rook r_rook
+    bool moved[2][3]; // row 0 1 : white black, col 0 1 2: king l_rook r_rook
 
     long white_timer;
     long black_timer;
@@ -42,16 +41,20 @@ public:
 
 protected:
     // array of set of positions for each pieces
-    unordered_set<Point> *whitePiece;
-    unordered_set<Point> *blackPiece;
+    unordered_set<Point, PointHash> *whitePiece;
+    unordered_set<Point, PointHash> *blackPiece;
 
 private:
+    Point src, dst; // for move command
+    bool isCastling;
+
     void init_board();
-    int check_first(Point src, int rd, int cd);
-    bool not_blocked(Point src, Point dst, bool isCastling);
-    bool is_check(Point src, Point dst, bool sameSide);
-    bool is_valid_castling(Point src, Point dst);
-    bool is_valid_move(Point src, Point dst, bool *isCastling);
-    void make_move(Point src, Point dst, bool isCastling);
+    int check_first(int rd, int cd);
+    bool not_blocked(bool forCastling);
+    bool is_check();
+    bool is_valid_castling();
+    bool is_valid_move();
+    void make_move();
+    int result_check();
     void change_turn();
 };
