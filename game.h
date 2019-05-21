@@ -49,7 +49,7 @@ private:
     bool isCastling;
 
     void init_board();
-    int check_first(int rd, int cd);
+    int check_first(Point p, int rd, int cd);
     bool not_blocked(bool forCastling);
     bool is_check();
     bool is_valid_castling();

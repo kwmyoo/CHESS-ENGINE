@@ -59,10 +59,10 @@ void Game::init_board() {
     }
 }
 
-inline int Game::check_first(int rd, int cd) {
+inline int Game::check_first(Point pt, int rd, int cd) {
     rd = (rd == 0) ? 0 : rd/abs(rd);
     cd = (cd == 0) ? 0 : cd/abs(cd);
-    int r = src.r + rd, c = src.c + cd;
+    int r = pt.r + rd, c = pt.c + cd;
     int p;
     while (r <= 7 && c <= 7) {
         p = board[r][c];
@@ -114,15 +114,15 @@ inline bool Game::is_check() {
     it = (board[src.r][src.c] > 0) ? whitePiece[KING].begin() :
         blackPiece[KING].begin();
     kingPos = *it;
-    rDiff = kingPos.r - src.r;
-    cDiff = kingPos.c - src.c;
+    rDiff = src.r - kingPos.r;
+    cDiff = src.c - kingPos.c;
     s = (curr_turn == WHITE) ? -1 : 1;
 
     if (rDiff == 0 || cDiff == 0) {
-        p = check_first(rDiff, cDiff);
+        p = check_first(src, rDiff, cDiff);
         t = ROOK;
     } else if (abs(rDiff) == abs(cDiff)) {
-        p = check_first(rDiff, cDiff);
+        p = check_first(src, rDiff, cDiff);
         t = BISHOP;
     }
     p *= s;
