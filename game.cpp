@@ -22,13 +22,18 @@ Game::Game(P_type wType, P_type bType) {
     init_board();
 }
 
+bool Game::is_valid_pick(Point *from) {
+    Side s = (board[from->r][from->c] > 0) ? WHITE : BLACK;
+    
+    return (s == curr_turn);
+}
+
 // initialize game board state
 void Game::init_board() {
     int i;
     Point wPoint, bPoint;
     Piece p;
-    Piece piecesOrder[] = { ROOK, KNIGHT, BISHOP, QUEEN, 
-        KING , BISHOP, KNIGHT, ROOK }; // initial setup
+
     for (i = 0; i < 8; i++) {
         for (int j = 0; j < 8; j++) {
             board[i][j] = EMPTY;
@@ -308,10 +313,10 @@ int Game::result_check() {
 
 }
 
-bool Game::handle_command(Point source, Point dest) {
+bool Game::handle_command(Point *source, Point *dest) {
     // set class data for processing command
-    src = source;
-    dst = dest;
+    src = *source;
+    dst = *dest;
     isCastling = false;
 
     int oppStatus;

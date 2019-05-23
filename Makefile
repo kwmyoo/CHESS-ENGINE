@@ -1,13 +1,15 @@
+CC= g++
+LDLIBS=-lsfml-graphics -lsfml-window -lsfml-system
+LDFLAGS=-L/usr/lib/x86_64-linux-gnu/
+CPPFLAGS=-I/usr/include/
+
 all: chess
 
 chess: main.o display.o game.o
-	g++ -o chess main.o display.o game.o
+	$(CC) -o chess main.o display.o game.o $(LDFLAGS) $(LDLIBS)
 
-main.o: main.cpp
-	g++ main.cpp -c -o main.o
+%.o: %.cpp
+	$(CC) -c $< -o $@  $(LDFLAGS) $(LDLIBS)
 
-display.o: display.cpp
-	g++ display.cpp -c -o display.o
-
-game.o: game.cpp
-	g++ game.cpp -c -o game.o
+clean:
+	rm -f *.o

@@ -1,4 +1,5 @@
 #include "game.h"
+#include "display.h"
 #include <iostream>
 #include <string>
 
@@ -43,11 +44,51 @@ int main() {
     // GET TIME LIMIT
     
     Game g(HUMAN, HUMAN);
+    DisplayGame display;
 
-    Point src, dst;
-    while (true) {
-        display_board(g);
-        parse_command(&src, &dst);
-        g.handle_command(src, dst);
+    Point *src = new Point, *dst = new Point;
+    bool srcSet = false;
+    sf::Vector2i srcPos, dstPos;
+    int r, c;
+
+    sf::Texture board;
+    board.loadFromFile("images/board.png");
+    const Sprite boardSprite(board);
+
+    while (display.window->isOpen()) {
+        display.draw_game(&boardSprite);
+        sf::Event e;
+
+        while (display.window->pollEvent(e)) {
+            if (e.type == sf::Event::Closed) display.window->close();
+
+            if (e.type == sf::Event::MouseButtonReleased) {
+                if (e.mouseButton.button == sf::Mouse::Left) {
+                    if (srcSet) {
+                        dstPos = sf::Mouse::getPosition(*(display.window));
+                        c = dstPos.x / display.size;
+                        r = 7 - (dstPos.y / display.size);
+
+                        dst->r = r;
+                        dst->c = c;
+
+                        if (g.handle_command(src, dst)) {
+                            display.apply_move(src, dst);
+
+                            srcSet = false;
+                        }
+                    } else {
+                        srcPos = sf::Mouse::getPosition(*(display.window));
+                        c = dstPos.x / display.size;
+                        r = 7 - (dstPos.y / display.size);
+
+                        src->r = r;
+                        src->c = c;
+
+                        if (g.is_valid_pick(src)) srcSet = true;
+                    }
+                }
+            }
+        }
     }
 }

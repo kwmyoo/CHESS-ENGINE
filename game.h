@@ -1,3 +1,6 @@
+#ifndef GAME_H
+#define GAME_H
+
 #include <cstdlib>
 #include <unordered_set>
 #include <unordered_map>
@@ -6,6 +9,9 @@ using namespace std;
 enum Side { WHITE, BLACK };
 enum Piece { EMPTY, PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING };
 enum P_type { HUMAN, ENGINE }; // player type
+
+const Piece piecesOrder[] = { ROOK, KNIGHT, BISHOP, QUEEN, 
+        KING , BISHOP, KNIGHT, ROOK }; // initial setup
 
 struct Point {
     int r, c;
@@ -41,7 +47,8 @@ public:
     long black_timer;
 
     Game(P_type wType, P_type bType);
-    bool handle_command(Point src, Point dst); // return true on valid moves
+    bool is_valid_pick(Point *from);
+    bool handle_command(Point *src, Point *dst); // return true on valid moves
 
 private:
     Point src, dst; // for move command
@@ -57,3 +64,5 @@ private:
     int result_check();
     void change_turn();
 };
+
+#endif
