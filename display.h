@@ -47,7 +47,7 @@ private:
 
     void init_setup();
 
-    const int figuresIndex[7] = { 0, 5, 3, 2, 4, 1, 0 };
+    const int figuresIndex[7] = { 0, 5, 1, 2, 0, 3, 4 };
 };
 
 #endif

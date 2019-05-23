@@ -40,14 +40,14 @@ void DisplayGame::init_setup() {
 
     for (int i = 0; i < 8; i++) {
         for (int j = 0; j < 2; j++) {
-            Sprite tmpSp = Sprite(*pieces, IntRect(size*figuresIndex[PAWN], size*j, size, size));
+            Sprite tmpSp = Sprite(*pieces, IntRect(size*figuresIndex[PAWN], size*(1-j), size, size));
             //tmpSp.setTextureRect(IntRect(size*figuresIndex[PAWN], size*j, size, size));
             tmpSp.setPosition(size*i + hSize, size*(7-pawnRows[j]) + hSize);
 
             PieceSprite ps(pawnRows[j], i, tmpSp);
             pieceSet->insert(ps);
 
-            tmpSp = Sprite(*pieces, IntRect(size*figuresIndex[piecesOrder[i]], size*j, size, size));
+            tmpSp = Sprite(*pieces, IntRect(size*figuresIndex[piecesOrder[i]], size*(1-j), size, size));
             //tmpSp->setTextureRect(IntRect(size*figuresIndex[piecesOrder[i]], size*j, size, size));
             tmpSp.setPosition(size*i + hSize, size*(7-otherRows[j]) + hSize);
 
