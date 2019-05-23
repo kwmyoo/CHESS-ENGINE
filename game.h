@@ -24,12 +24,13 @@ struct Point {
     }
 };
 
-class PointHash {
-public:
-    size_t operator() (const Point& pt) const {
-        return pt.r*8 + pt.c;
-    }
-};
+namespace std {
+    template<> struct hash<Point> {
+        size_t operator()(const Point&  pt) const {
+            return pt.r*8 + pt.c;
+        }
+    };
+}
 
 class Game {
 public:
@@ -40,8 +41,8 @@ public:
     bool moved[2][3]; // row 0 1 : white black, col 0 1 2: king l_rook r_rook
 
     // array of set of positions for each pieces
-    unordered_set<Point, PointHash> *whitePiece;
-    unordered_set<Point, PointHash> *blackPiece;
+    unordered_set<Point> *whitePiece;
+    unordered_set<Point> *blackPiece;
 
     long white_timer;
     long black_timer;

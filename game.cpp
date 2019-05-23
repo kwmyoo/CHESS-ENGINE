@@ -16,8 +16,8 @@ Game::Game(P_type wType, P_type bType) {
         }
     }
 
-    whitePiece = new unordered_set<Point, PointHash>[7];
-    blackPiece = new unordered_set<Point, PointHash>[7];
+    whitePiece = new unordered_set<Point>[7];
+    blackPiece = new unordered_set<Point>[7];
 
     init_board();
 }
@@ -113,7 +113,7 @@ inline bool Game::not_blocked(bool forCastling) {
 // if false, checks for opponent's king
 inline bool Game::is_check() {
     Point kingPos;
-    unordered_set<Point, PointHash>::iterator it;
+    unordered_set<Point>::iterator it;
     int rDiff, cDiff, s, t, p = 0;
 
     it = (board[src.r][src.c] > 0) ? whitePiece[KING].begin() :

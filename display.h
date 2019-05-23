@@ -9,22 +9,25 @@ using namespace sf;
 class PieceSprite {
 public:
     int r, c;
-    Sprite *sp;
+    Sprite sp;
 
     PieceSprite(int row, int col);
-    PieceSprite(int row, int col, Sprite *spr);
+    PieceSprite(int row, int col, Sprite spr);
 
-    void change_member(int row, int col);
-    void change_member(int row, int col, Sprite *spr);
-    bool operator== (const PieceSprite& pt) const;
+    void draw_figure(RenderWindow *window) const;
+
+    bool operator== (const PieceSprite& pt) const {
+        return (pt.r == r) && (pt.c == c);
+    };
 };
 
-class PSHash {
-public:
-    size_t operator() (const PieceSprite& pt) const {
-        return pt.r*8 + pt.c;
-    }
-};
+namespace std {
+    template<> struct hash<PieceSprite> {
+        size_t operator() (const PieceSprite& pt) const {
+            return pt.r*8 + pt.c;
+        }
+    };
+}
 
 class DisplayGame {
 public:
@@ -39,7 +42,8 @@ public:
     void draw_game(const Sprite* bds);
 
 private:
-    std::unordered_set<PieceSprite, PSHash> *pieceSet;
+    std::unordered_set<PieceSprite> *pieceSet;
+    Texture *pieces;
 
     void init_setup();
 
