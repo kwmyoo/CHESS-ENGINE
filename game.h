@@ -38,6 +38,7 @@ public:
     P_type wp; // white player
     P_type bp; // black player
     Side curr_turn;
+    bool isCastling;
     bool moved[2][3]; // row 0 1 : white black, col 0 1 2: king l_rook r_rook
 
     // array of set of positions for each pieces
@@ -53,7 +54,6 @@ public:
 
 private:
     Point src, dst; // for move command
-    bool isCastling;
 
     void init_board();
     int check_first(Point p, int rd, int cd);
