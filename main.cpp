@@ -3,6 +3,61 @@
 #include <iostream>
 #include <string>
 
+// from display.h, size of figures and board
+int hSize, fSize;
+
+void store_mouse_pos(sf::Vector2i pos, Point *pt) {
+    int c = (pos.x - hSize) / fSize;
+    int r = 7 - (pos.y - hSize) / fSize;
+
+    pt->r = r;
+    pt->c = c;
+}
+
+int main() {
+    
+    Game g(HUMAN, HUMAN);
+    DisplayGame display;
+    hSize = display.hSize, fSize = display.fSize;
+
+    Point *src = new Point, *dst = new Point;
+    bool srcSet = false;
+    int r, c;
+
+    sf::Vector2i pos;
+    sf::Event e;
+
+    while (display.window.isOpen()) {
+        display.draw_game();
+
+        while (display.window.pollEvent(e)) {
+            if (e.type == sf::Event::Closed) display.window.close();
+
+            if (e.type == sf::Event::MouseButtonReleased) {
+                pos = sf::Mouse::getPosition(display.window);
+                
+                if (e.mouseButton.button == sf::Mouse::Left) {
+                    if (srcSet) {
+                        store_mouse_pos(pos, dst);
+                
+                        if (g.handle_command(src, dst)) {
+                            display.apply_move(src, dst, g.isCastling);
+                        }
+
+                        srcSet = false;
+                    } else {
+                        store_mouse_pos(pos, src);
+
+                        if (g.is_valid_pick(src)) srcSet = true;
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+/*
 std::string strArr[7] = {" ", "P", "N", "B", "R", "Q", "K"};
 
 void display_board(Game g) {
@@ -37,58 +92,4 @@ void parse_command(Point *src, Point *dst) {
     dst->c = (int)(command[2] - 'a');
     dst->r = (int)(command[3] - '1');
 }
-
-int main() {
-    // DISPLAY INITIAL SCREEN (select game type)
-    // THEN GET TYPE OF EACH PLAYER
-    // GET TIME LIMIT
-    
-    Game g(HUMAN, HUMAN);
-    DisplayGame display;
-
-    Point *src = new Point, *dst = new Point;
-    bool srcSet = false;
-    sf::Vector2i srcPos, dstPos;
-    int r, c;
-
-    sf::Texture board;
-    board.loadFromFile("images/board.png");
-    const Sprite boardSprite(board);
-
-    while (display.window->isOpen()) {
-        display.draw_game(&boardSprite);
-        sf::Event e;
-
-        while (display.window->pollEvent(e)) {
-            if (e.type == sf::Event::Closed) display.window->close();
-
-            if (e.type == sf::Event::MouseButtonReleased) {
-                if (e.mouseButton.button == sf::Mouse::Left) {
-                    if (srcSet) {
-                        dstPos = sf::Mouse::getPosition(*(display.window));
-                        c = dstPos.x / display.size;
-                        r = 7 - (dstPos.y / display.size);
-
-                        dst->r = r;
-                        dst->c = c;
-
-                        if (g.handle_command(src, dst)) {
-                            display.apply_move(src, dst);
-
-                            srcSet = false;
-                        }
-                    } else {
-                        srcPos = sf::Mouse::getPosition(*(display.window));
-                        c = dstPos.x / display.size;
-                        r = 7 - (dstPos.y / display.size);
-
-                        src->r = r;
-                        src->c = c;
-
-                        if (g.is_valid_pick(src)) srcSet = true;
-                    }
-                }
-            }
-        }
-    }
-}
+*/
