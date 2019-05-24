@@ -23,9 +23,14 @@ Game::Game(P_type wType, P_type bType) {
 }
 
 bool Game::is_valid_pick(Point *from) {
-    Side s = (board[from->r][from->c] > 0) ? WHITE : BLACK;
+    int p = board[from->r][from->c];
+
+    bool result;
+    if (p > 0) result = (curr_turn == WHITE);
+    else if (p < 0) result = (curr_turn == BLACK);
+    else result = false;
     
-    return (s == curr_turn);
+    return result;
 }
 
 // initialize game board state
@@ -83,26 +88,26 @@ inline int Game::check_first(Point pt, int rd, int cd) {
 // return true if the path between src and dst is unblocked
 // assume the input points are positioned vertical, horizontal or diagonal
 // third parameter is set to true when it is used for checking for castling
-inline bool Game::not_blocked(bool forCastling) {
-    int rDiff = dst.r - src.r; // vectors for stepping
-    int cDiff = dst.c - src.c;
+inline bool Game::not_blocked(bool forCastling, Point *source, Point *dest) {
+    int rDiff = dest->r - source->r; // vectors for stepping
+    int cDiff = dest->c - source->c;
     if (rDiff != 0) rDiff /= abs(rDiff);
     if (cDiff != 0) cDiff /= abs(cDiff);
 
-    int r = src.r + rDiff;
-    int c = src.c + cDiff;
+    int r = source->r + rDiff;
+    int c = source->c + cDiff;
 
-    Side srcSide = (board[src.r][src.c] > 0) ? WHITE : BLACK;
-    Side dstSide = (board[dst.r][dst.c] > 0) ? WHITE : BLACK;
+    Side srcSide = (board[source->r][source->c] > 0) ? WHITE : BLACK;
+    Side dstSide = (board[dest->r][dest->c] > 0) ? WHITE : BLACK;
 
-    while ((r != dst.r) || (c != dst.c)) {
+    while ((r != dest->r) || (c != dest->c)) {
         if (board[r][c] != EMPTY) return false;
 
         r += rDiff;
         c += cDiff;
     }
 
-    if (!forCastling && (board[dst.r][dst.c] != EMPTY) && (srcSide == dstSide))
+    if (!forCastling && (board[dest->r][dest->c] != EMPTY) && (srcSide == dstSide))
         return false;
     
     return true;
@@ -121,6 +126,9 @@ inline bool Game::is_check() {
     kingPos = *it;
     rDiff = src.r - kingPos.r;
     cDiff = src.c - kingPos.c;
+
+    if (!not_blocked(false, &src, &kingPos))
+
     s = (curr_turn == WHITE) ? -1 : 1;
 
     if (rDiff == 0 || cDiff == 0) {
@@ -159,7 +167,7 @@ bool Game::is_valid_castling() {
         rookPos.c = 7;
     }
 
-    if (!not_blocked(true)) return false;
+    if (!not_blocked(true, &src, &dst)) return false;
 
     return true;
 }
@@ -193,7 +201,7 @@ bool Game::is_valid_move() {
             // moving diagonally
             } else if ((dst.r == src.r + piece)
                     && (cDiff == 1)) {
-                // do nothing
+                if (board[dst.r][dst.c] == EMPTY) return false;
 
             // if none of above, return false
             } else return false;
@@ -213,20 +221,21 @@ bool Game::is_valid_move() {
         
         case BISHOP:
             if (rDiff != cDiff) return false;
-            if (!not_blocked(false)) return false;
+            if (!not_blocked(false, &src, &dst)) return false;
             
             break;
 
         case ROOK:
             if ((src.r != dst.r) && (src.c != dst.c)) return false;
-            if (!not_blocked(false)) return false;
+            if (!not_blocked(false, &src, &dst)) return false;
 
             break;
 
         case QUEEN:
             if ((rDiff != cDiff)
                 && ((src.r != dst.r) && (src.c != dst.c))) return false;
-            if (!not_blocked(false)) return false;
+
+            if (!not_blocked(false, &src, &dst)) return false;
 
             break;
 

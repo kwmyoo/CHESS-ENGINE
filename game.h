@@ -49,7 +49,7 @@ public:
 
     Game(P_type wType, P_type bType);
     bool is_valid_pick(Point *from);
-    bool handle_command(Point *src, Point *dst); // return true on valid moves
+    bool handle_command(Point *src, Point *dst);
 
 private:
     Point src, dst; // for move command
@@ -57,7 +57,7 @@ private:
 
     void init_board();
     int check_first(Point p, int rd, int cd);
-    bool not_blocked(bool forCastling);
+    bool not_blocked(bool forCastling, Point *source, Point *dest);
     bool is_check();
     bool is_valid_castling();
     bool is_valid_move();
