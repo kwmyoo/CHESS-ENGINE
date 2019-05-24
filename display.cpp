@@ -26,10 +26,14 @@ void PieceSprite::draw_figure(RenderWindow *window) const {
 //////////////// DisplayGame definition ////////////////
 
 DisplayGame::DisplayGame() {
-    pieceSet = new psSet;
-    pieces = new Texture();
-    pieces->loadFromFile("images/figures.png");
-    window = new RenderWindow(VideoMode(boardSize, boardSize), "CHESS (press SPACE)");
+    pieceSet = psSet();
+
+    pieces = Texture(), board = Texture();
+    pieces.loadFromFile("images/figures.png");
+    board.loadFromFile("images/board.png");
+    boardSprite = Sprite(board);
+
+    window.create(VideoMode(boardSize, boardSize), "CHESS (press SPACE)");
 
     init_setup();
 }
@@ -40,49 +44,68 @@ void DisplayGame::init_setup() {
 
     for (int i = 0; i < 8; i++) {
         for (int j = 0; j < 2; j++) {
-            Sprite tmpSp = Sprite(*pieces, IntRect(size*figuresIndex[PAWN], size*(1-j), size, size));
-            //tmpSp.setTextureRect(IntRect(size*figuresIndex[PAWN], size*j, size, size));
-            tmpSp.setPosition(size*i + hSize, size*(7-pawnRows[j]) + hSize);
+            Sprite tmpSp = Sprite(pieces, IntRect(fSize*figuresIndex[PAWN], fSize*(1-j), fSize, fSize));
+            tmpSp.setPosition(fSize*i + hSize, fSize*(7-pawnRows[j]) + hSize);
 
             PieceSprite ps(pawnRows[j], i, tmpSp);
-            pieceSet->insert(ps);
+            pieceSet.insert(ps);
 
-            tmpSp = Sprite(*pieces, IntRect(size*figuresIndex[piecesOrder[i]], size*(1-j), size, size));
-            //tmpSp->setTextureRect(IntRect(size*figuresIndex[piecesOrder[i]], size*j, size, size));
-            tmpSp.setPosition(size*i + hSize, size*(7-otherRows[j]) + hSize);
+            tmpSp = Sprite(pieces, IntRect(fSize*figuresIndex[piecesOrder[i]], fSize*(1-j), fSize, fSize));
+            tmpSp.setPosition(fSize*i + hSize, fSize*(7-otherRows[j]) + hSize);
 
             ps = PieceSprite(otherRows[j], i, tmpSp);
-            pieceSet->insert(ps);
+            pieceSet.insert(ps);
         }
     }
 }
 
-void DisplayGame::draw_game(const Sprite* boardSprite) {
+void DisplayGame::draw_game() {
 
-    window->clear();
-    window->draw(*boardSprite);
+    window.clear();
+    window.draw(boardSprite);
 
     psSet::const_iterator it;
     Sprite *tmp;
-    for (it = pieceSet->cbegin(); it != pieceSet->cend(); it++) {
-        (*it).draw_figure(window);
+    for (it = pieceSet.cbegin(); it != pieceSet.cend(); it++) {
+        (*it).draw_figure(&window);
     }
 
-    window->display();
+    window.display();
 }
 
-void DisplayGame::apply_move(Point *src, Point *dst) {
+void DisplayGame::apply_move(Point *src, Point *dst, bool isCastling) {
     PieceSprite ps(dst->r, dst->c);
-    psSet::iterator it = pieceSet->find(ps);
-    if (it != pieceSet->end()) pieceSet->erase(it);
+    psSet::iterator it = pieceSet.find(ps);
+    if (it != pieceSet.end()) pieceSet.erase(it);
 
     ps = PieceSprite(src->r, src->c);      
-    it = pieceSet->find(ps);
+    it = pieceSet.find(ps);
     ps.sp = it->sp;
-    pieceSet->erase(it);
+    pieceSet.erase(it);
 
     ps.r = dst->r;
     ps.c = dst->c;
-    ps.sp.setPosition(size*(ps.c) + hSize, size*(7-(ps.r)) + hSize);
-    pieceSet->insert(ps);
+    ps.sp.setPosition(fSize*(ps.c) + hSize, fSize*(7-(ps.r)) + hSize);
+    pieceSet.insert(ps);
+
+
+    if (isCastling) {
+        int r = src->r ,c;
+
+        if (dst->c > src->c) {
+            c = 7;
+        } else {
+            c = 0;
+        }
+
+        ps = PieceSprite(r, c);
+        it = pieceSet.find(ps);
+        ps.sp = it->sp;
+        pieceSet.erase(it);
+
+        ps.r = src->r;
+        ps.c = (c > 0) ? (dst->c - 1) : (dst->c + 1);
+        ps.sp.setPosition(fSize*(ps.c) + hSize, fSize*(7-ps.r) + hSize);
+        pieceSet.insert(ps);
+    }
 }

@@ -32,18 +32,20 @@ namespace std {
 class DisplayGame {
 public:
     const int boardSize = 504;
-    const int size = 56;
-    const int hSize = size/2;
-    RenderWindow *window;
+    const int fSize = 56;
+    const int hSize = fSize/2;
+    RenderWindow window;
 
     DisplayGame();
 
-    void apply_move(Point *src, Point *dst);
-    void draw_game(const Sprite* bds);
+    void apply_move(Point *src, Point *dst, bool isCastling);
+    void draw_game();
 
 private:
-    std::unordered_set<PieceSprite> *pieceSet;
-    Texture *pieces;
+    std::unordered_set<PieceSprite> pieceSet;
+    Texture pieces;
+    Texture board;
+    Sprite boardSprite;
 
     void init_setup();
 
