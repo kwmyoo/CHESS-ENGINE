@@ -56,7 +56,7 @@ private:
     Point src, dst; // for move command
 
     void init_board();
-    int check_first(Point p, int rd, int cd);
+    int check_first(Point& p, int rd, int cd);
     bool not_blocked(bool forCastling, Point *source, Point *dest);
     bool is_check();
     bool is_valid_castling();

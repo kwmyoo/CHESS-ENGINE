@@ -69,14 +69,17 @@ void Game::init_board() {
     }
 }
 
-inline int Game::check_first(Point pt, int rd, int cd) {
+inline int Game::check_first(Point& pt, int rd, int cd) {
     rd = (rd == 0) ? 0 : rd/abs(rd);
     cd = (cd == 0) ? 0 : cd/abs(cd);
     int r = pt.r + rd, c = pt.c + cd;
     int p;
     while (r <= 7 && c <= 7) {
         p = board[r][c];
-        if (p != EMPTY) return p;
+        if (p != EMPTY) {
+            pt.r = r, pt.c = c;
+            return p;
+        }
 
         r += rd;
         c += cd;
@@ -113,9 +116,6 @@ inline bool Game::not_blocked(bool forCastling, Point *source, Point *dest) {
     return true;
 }
 
-// TODO!!!!
-// if true, checks whether the move caused same side king's check
-// if false, checks for opponent's king
 inline bool Game::is_check() {
     Point kingPos;
     unordered_set<Point>::iterator it;
@@ -127,22 +127,31 @@ inline bool Game::is_check() {
     rDiff = src.r - kingPos.r;
     cDiff = src.c - kingPos.c;
 
-    if (!not_blocked(false, &src, &kingPos))
-
     s = (curr_turn == WHITE) ? -1 : 1;
 
+    Point tmp;
+    tmp.r = src.r, tmp.c = src.c;
+
     if (rDiff == 0 || cDiff == 0) {
-        p = check_first(src, rDiff, cDiff);
+        p = check_first(tmp, rDiff, cDiff);
         t = ROOK;
     } else if (abs(rDiff) == abs(cDiff)) {
-        p = check_first(src, rDiff, cDiff);
+        p = check_first(tmp, rDiff, cDiff);
         t = BISHOP;
     }
     p *= s;
 
-    if (p == t || p == QUEEN) {
+    // temporarily swap source and dest to check for check
+    s = board[src.r][src.c];
+    board[src.r][src.c] = board[dst.r][dst.c];
+    board[dst.r][dst.c] = s;
+    if ((p == t || p == QUEEN) && not_blocked(false, &tmp, &kingPos)) {
         return true;
     }
+
+    s = board[src.r][src.c];
+    board[src.r][src.c] = board[dst.r][dst.c];
+    board[dst.r][dst.c] = s;
 
     return false;
 }
@@ -283,7 +292,7 @@ void Game::make_move() {
         }
     }
 
-    board[dst.r][dst.c] = board[src.r][src.c];
+    board[dst.r][dst.c] = p;
     board[src.r][src.c] = EMPTY;
 
     if (isCastling) {
@@ -319,7 +328,7 @@ void Game::change_turn() {
 
 // c
 int Game::result_check() {
-
+    return 1;
 }
 
 bool Game::handle_command(Point *source, Point *dest) {
