@@ -10,6 +10,8 @@ void store_mouse_pos(sf::Vector2i pos, Point *pt) {
     int c = (pos.x - hSize) / fSize;
     int r = 7 - (pos.y - hSize) / fSize;
 
+    // TODO 
+    // use smart ptr
     pt->r = r;
     pt->c = c;
 }
